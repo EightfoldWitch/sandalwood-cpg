@@ -1,0 +1,307 @@
+Perfect — let's get **super explicit** and break it down **LLM-friendly** as you asked:  
+Every task will be atomic, detailed, and connected to the system structure.  
+
+---
+
+# ?? Detailed Implementation Task List
+
+## 1. Backend Setup (Node.js + Express)
+
+---
+
+### 1.1 Initialize Node.js Project
+**Task:**  
+Create a new Node.js project using `npm init`. Install `express`, `uuid`, `socket.io`, `worker_threads`, `fs-extra`, and any additional required libraries. Setup a basic `index.js` server entrypoint that listens on port 3000.
+
+---
+
+### 1.2 Setup Express Server
+**Task:**  
+Implement an Express server in `index.js` with a `/api/health` GET endpoint that returns `{ status: 'ok' }` for testing server availability.
+
+---
+
+### 1.3 Setup WebSocket Server
+**Task:**  
+Integrate `socket.io` with the Express server to allow broadcasting live action updates to connected React clients. Setup a `connection` and `disconnect` listener.
+
+---
+
+## 2. Action Runner Core
+
+---
+
+### 2.1 Implement ActionManager Class
+**Task:**  
+Create an `ActionManager` class that manages all running actions.  
+Responsibilities:
+- Start actions
+- Track action status in memory
+- Stop individual actions
+- Stop all actions
+- Fetch live actions
+- Fetch history of actions
+
+Save the class in `backend/ActionManager.js`.
+
+---
+
+### 2.2 Implement Worker Thread ActionRunner
+**Task:**  
+Create an `ActionRunner` module that uses `worker_threads` to execute an action in parallel.  
+Responsibilities:
+- Execute action logic
+- Report status updates to ActionManager
+- Log lifecycle events to `/logs/{action_id}.log`
+
+Save the module in `backend/ActionRunner.js`.
+
+---
+
+### 2.3 Implement Action Base Class
+**Task:**  
+Create a base `Action` class that all specific action types inherit from.  
+Responsibilities:
+- Store common properties (id, status, startTime, endTime, parentId, inputId)
+- Define abstract methods `start()` and `stop()`
+
+Save the class in `backend/actions/Action.js`.
+
+---
+
+## 3. Action Implementations
+
+Each action inherits from the base `Action` class and implements specific logic.
+
+---
+
+### 3.1 Implement SpecGenerator Action
+**Task:**  
+Create a `SpecGenerator` class that:
+- Accepts a rough specification text as input
+- Sends the input to an LLM API endpoint
+- Saves the resulting specification JSON to `/outputs/spec_{id}.json`
+- Emits status updates during execution
+
+Save in `backend/actions/SpecGenerator.js`.
+
+---
+
+### 3.2 Implement SpecUpdator Action
+**Task:**  
+Create a `SpecUpdator` class that:
+- Loads a previous spec output document
+- Accepts a refinement text
+- Sends both the previous spec and refinement to an LLM API endpoint
+- Saves updated spec to `/outputs/spec_update_{id}.json`
+
+Save in `backend/actions/SpecUpdator.js`.
+
+---
+
+### 3.3 Implement TaskEnumerator Action
+**Task:**  
+Create a `TaskEnumerator` class that:
+- Loads a previous spec output document
+- Sends it to the LLM API to break down into detailed tasks
+- Saves task list to `/outputs/tasks_{id}.json`
+
+Save in `backend/actions/TaskEnumerator.js`.
+
+---
+
+### 3.4 Implement TaskListImplementor Action
+**Task:**  
+Create a `TaskListImplementor` class that:
+- Loads a previously generated task list JSON
+- Iterates through each task
+- For each task, spawns a child `TaskImplementor` action via ActionManager
+- Tracks and links child actions as children
+
+Save in `backend/actions/TaskListImplementor.js`.
+
+---
+
+### 3.5 Implement TaskImplementor Action
+**Task:**  
+Create a `TaskImplementor` class that:
+- Takes a single task description
+- Sends the task description to the LLM API
+- Receives source code output
+- Saves output to `/outputs/{task_id}.code`
+- Saves same source file into `/src/{project}/{task_name}.js`
+
+Save in `backend/actions/TaskImplementor.js`.
+
+---
+
+### 3.6 Implement UnitTestEnumerator Action
+**Task:**  
+Create a `UnitTestEnumerator` class that:
+- Takes a source code file and the original task description
+- Sends both to the LLM API asking for unit test requirements
+- Receives a list of test descriptions
+- Saves to `/outputs/unittests_{id}.json`
+
+Save in `backend/actions/UnitTestEnumerator.js`.
+
+---
+
+### 3.7 Implement UnitTestImplementor Action
+**Task:**  
+Create a `UnitTestImplementor` class that:
+- Takes a single unit test instruction
+- Sends to the LLM API
+- Receives unit test code
+- Saves output to `/outputs/{test_id}.testcode`
+- Saves same test file into `/src/{project}/{test_name}.test.js`
+
+Save in `backend/actions/UnitTestImplementor.js`.
+
+---
+
+### 3.8 Implement CodeUpdator Action
+**Task:**  
+Create a `CodeUpdator` class that:
+- Takes a source file and refinement instruction
+- Sends both to the LLM API
+- Receives updated source code
+- Saves output to `/outputs/{code_update_id}.code`
+- Overwrites the corresponding file in `/src/{project}/{filename}.js`
+
+Save in `backend/actions/CodeUpdator.js`.
+
+---
+
+## 4. LLM API Client
+
+---
+
+### 4.1 Implement LLMApiClient Module
+**Task:**  
+Create an `LLMApiClient` class that:
+- Accepts a prompt
+- Posts the prompt to an LLM endpoint
+- Handles retries
+- Returns generated text or JSON
+
+Save in `backend/LLMApiClient.js`.
+
+---
+
+## 5. API Routes (Express WebAPI)
+
+---
+
+### 5.1 Implement Start Action Endpoint
+**Task:**  
+Create a POST `/api/actions/start` endpoint that:
+- Accepts `{ type, inputId, additionalInput }`
+- Calls ActionManager to start a new action
+- Returns action ID
+
+---
+
+### 5.2 Implement Get Action Status Endpoint
+**Task:**  
+Create a GET `/api/actions/:id/status` endpoint that:
+- Returns the latest status of the specified action ID
+
+---
+
+### 5.3 Implement Stop Action Endpoint
+**Task:**  
+Create a POST `/api/actions/:id/stop` endpoint that:
+- Calls ActionManager to stop the specified action
+
+---
+
+### 5.4 Implement Stop All Actions Endpoint
+**Task:**  
+Create a POST `/api/actions/stop-all` endpoint that:
+- Calls ActionManager to stop all currently running actions
+
+---
+
+### 5.5 Implement Fetch Live Actions Endpoint
+**Task:**  
+Create a GET `/api/actions/live` endpoint that:
+- Returns all currently running actions as a parent/child structured list
+
+---
+
+### 5.6 Implement Fetch Action History Endpoint
+**Task:**  
+Create a GET `/api/actions/history` endpoint that:
+- Returns all completed, failed, or stopped actions with metadata
+
+---
+
+## 6. Frontend Setup (React)
+
+---
+
+### 6.1 Initialize React Project
+**Task:**  
+Create a React app using `Vite` or `Create React App`. Install `axios` and `socket.io-client` for API requests and live updates.
+
+---
+
+### 6.2 Build Live Action Tree View Component
+**Task:**  
+Implement a `LiveActionTree` component that:
+- Fetches live actions via WebSocket or polling
+- Renders parent/child hierarchy as a tree
+- Displays action type, status, and start time
+
+---
+
+### 6.3 Build Stop Action Button
+**Task:**  
+Implement a button next to each action node that:
+- Calls the `/api/actions/:id/stop` endpoint when clicked
+
+---
+
+### 6.4 Build Stop All Actions Button
+**Task:**  
+Implement a global button that:
+- Calls `/api/actions/stop-all` when clicked
+
+---
+
+### 6.5 Build History List Component
+**Task:**  
+Implement a `HistoryList` component that:
+- Fetches completed actions from `/api/actions/history`
+- Displays action metadata and links to output/download files
+
+---
+
+### 6.6 Build Command Center Component
+**Task:**  
+Implement a `CommandCenter` form that:
+- Allows starting a new action by selecting type
+- Allows uploading/selecting input data
+- Submits to `/api/actions/start`
+
+---
+
+### 6.7 Setup WebSocket Client for Live Updates
+**Task:**  
+Connect to the WebSocket server in the React app and subscribe to action updates to update the Live Tree automatically.
+
+---
+
+# ?? Final Notes:
+- Each task focuses on **one module, one function, one component**.
+- No task mixes backend and frontend implementation.
+- All storage paths and relationships between files are defined.
+- All endpoints have clear input/output expectations.
+
+---
+
+---
+
+Would you also like me to bundle this into a **ready JSON task file**?  
+(So you can later **auto-feed** it into your TaskEnumerator?) ??

@@ -1,0 +1,3 @@
+-generate specification
+-generate detailed instructions for individual tasks
+-iterate over the instructions for each task

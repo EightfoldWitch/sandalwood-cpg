@@ -1,0 +1,105 @@
+Sure! Here's the full implementation for the first set of tasks you requested:  
+
+---
+
+# ?? Project Structure
+```
+/backend
+  |-- index.js
+  |-- package.json
+```
+
+---
+
+# ?? 1.1 Initialize Node.js Project
+
+In the project root (`/backend`):
+
+```bash
+npm init -y
+npm install express socket.io uuid fs-extra
+```
+
+---
+
+# ??? 1.2 Setup Express Server
+
+Create a file `backend/index.js`:
+
+```javascript
+// Import dependencies
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const path = require('path');
+
+// Initialize Express app
+const app = express();
+
+// Create HTTP server
+const server = http.createServer(app);
+
+// Initialize WebSocket server (socket.io)
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+// WebSocket events
+io.on('connection', (socket) => {
+  console.log(`Client connected: ${socket.id}`);
+
+  socket.on('disconnect', () => {
+    console.log(`Client disconnected: ${socket.id}`);
+  });
+});
+
+// Start server
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+});
+```
+
+---
+
+# ? Summary of What Was Implemented:
+- `npm init -y` + installed `express`, `socket.io`, `uuid`, `fs-extra`.
+- Basic Express server created.
+- `/api/health` endpoint created — returns `{ status: 'ok' }`.
+- WebSocket server (Socket.IO) integrated with connection and disconnection logs.
+- Server listens on port `3000`.
+
+---
+
+# ?? Bonus Tip:
+To run your backend:
+
+```bash
+cd backend
+node index.js
+```
+
+You should see:
+
+```
+Server listening on port 3000
+```
+
+And when you open [http://localhost:3000/api/health](http://localhost:3000/api/health) — you should see:
+
+```json
+{ "status": "ok" }
+```
+
+---
+
+Would you like me to immediately continue and implement the **next set of tasks** (ActionManager and ActionRunner)? ??  
+I can keep going fast if you want!
